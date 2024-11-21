@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad</title>
+    <style>
+        :root {
+            --background: #ffffff;
+            --text: #000000;
+            --muted: #f3f4f6;
+            --muted-text: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        .dark {
+            --background: #1a1a1a;
+            --text: #ffffff;
+            --muted: #27272a;
+            --muted-text: #a1a1aa;
+            --border: #3f3f46;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            transition: background-color 0.2s, color 0.2s;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--muted);
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .encoding {
+            font-size: 0.875rem;
+            color: var(--muted-text);
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        button {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 0.25rem;
+        }
+
+        button:hover {
+            background-color: var(--border);
+        }
+
+        .toolbar {
+            background-color: var(--muted);
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats {
+            font-size: 0.875rem;
+            color: var(--muted-text);
+        }
+
+        .editor-container {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .line-numbers {
+            background-color: var(--muted);
+            padding: 0.5rem;
+            text-align: right;
+            color: var(--muted-text);
+            user-select: none;
+            min-width: 3rem;
+            font-size: 0.875rem;
+            overflow-y: hidden;
+        }
+
+        #editor {
+            flex: 1;
+            background-color: var(--background);
+            color: var(--text);
+            font-family: monospace;
+            font-size: 0.875rem;
+            padding: 0.5rem;
+            border: none;
+            resize: none;
+            outline: none;
+        }
+
+        footer {
+            background-color: var(--muted);
+            padding: 0.5rem 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--muted-text);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="title-section">
+            <h1>Notepad</h1>
+            <span class="encoding">UTF-8</span>
+        </div>
+        <div class="controls">
+            <button id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+            <button id="fullscreenToggle" aria-label="Toggle fullscreen">⛶</button>
+        </div>
+    </header>
+
+    <div class="toolbar">
+        <div class="stats">
+            Lines: <span id="lineCount">1</span> | Characters: <span id="charCount">0</span>
+        </div>
+        <div class="controls">
+            <button id="copyBtn" aria-label="Copy content">📋</button>
+            <button id="saveBtn" aria-label="Save content">💾</button>
+            <button id="clearBtn" aria-label="Clear content">🗑️</button>
+        </div>
+    </div>
+
+    <div class="editor-container">
+        <div class="line-numbers" id="lineNumbers">1</div>
+        <textarea id="editor" spellcheck="false" placeholder="Start typing..."></textarea>
+    </div>
+
+    <footer>
+        <span>Ready</span>
+        <span id="clock"></span>
+    </footer>
+
+    <script>
+        const editor = document.getElementById('editor');
+        const lineNumbers = document.getElementById('lineNumbers');
+        const lineCountElement = document.getElementById('lineCount');
+        const charCountElement = document.getElementById('charCount');
+        const themeToggle = document.getElementById('themeToggle');
+        const fullscreenToggle = document.getElementById('fullscreenToggle');
+        const copyBtn = document.getElementById('copyBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const clock = document.getElementById('clock');
+
+        // Update line numbers
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineCountElement.textContent = lines;
+            lineNumbers.innerHTML = Array.from(
+                { length: lines },
+                (_, i) => `${i + 1}<br>`
+            ).join('');
+        }
+
+        // Update character count
+        function updateCharCount() {
+            charCountElement.textContent = editor.value.length;
+        }
+
+        // Event listeners for editor
+        editor.addEventListener('input', () => {
+            updateLineNumbers();
+            updateCharCount();
+        });
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + 4;
+            }
+        });
+
+        // Theme toggle
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            themeToggle.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+        });
+
+        // Fullscreen toggle
+        fullscreenToggle.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                fullscreenToggle.textContent = '⛶';
+            } else {
+                document.exitFullscreen();
+                fullscreenToggle.textContent = '⛶';
+            }
+        });
+
+        // Copy button
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(editor.value);
+        });
+
+        // Save button
+        saveBtn.addEventListener('click', () => {
+            const blob = new Blob([editor.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'notepad-content.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            editor.value = '';
+            updateLineNumbers();
+            updateCharCount();
+            editor.focus();
+        });
+
+        // Update clock
+        function updateClock() {
+            clock.textContent = new Date().toLocaleTimeString();
+        }
+
+        // Initialize
+        updateLineNumbers();
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Check system dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+            themeToggle.textContent = '☀️';
+        }
+
+        // Listen for system dark mode changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            document.documentElement.classList.toggle('dark', e.matches);
+            themeToggle.textContent = e.matches ? '☀️' : '🌙';
+        });
+    </script>
+</body>
+</html>
